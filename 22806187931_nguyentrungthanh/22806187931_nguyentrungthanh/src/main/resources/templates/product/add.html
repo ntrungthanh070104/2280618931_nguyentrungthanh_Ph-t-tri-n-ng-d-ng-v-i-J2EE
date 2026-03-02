@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>Thêm Sản Phẩm Mới</title>
+
+    <style>
+        .product-card {
+            max-width: 650px;
+            margin: auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            padding: 40px;
+            background: #fff;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Khung chờ khi chưa có ảnh */
+        .img-placeholder {
+            width: 100%;
+            height: 250px;
+            border: 2px dashed #ced4da;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            color: #6c757d;
+            font-weight: 500;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .preview-img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-top: 10px;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 10px 15px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+            border-color: #86b7fe;
+        }
+
+        /* Tùy chỉnh cụm nút bấm */
+        .btn-custom {
+            padding: 12px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #198754, #146c43);
+            border: none;
+            color: white;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(25, 135, 84, 0.3);
+            color: white;
+        }
+
+        .btn-cancel {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            color: #495057;
+        }
+
+        .btn-cancel:hover {
+            background: #e9ecef;
+            color: #212529;
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content" class="container mt-5 mb-5">
+
+    <div class="product-card">
+        <h3 class="text-center mb-4 fw-bold text-primary">✨ Thêm Sản Phẩm Mới</h3>
+
+        <form th:action="@{/products/save}" th:object="${product}" method="post">
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Tên mặt hàng <span class="text-danger">*</span></label>
+                <input type="text" class="form-control"
+                       th:field="*{name}"
+                       placeholder="Ví dụ: Áo sơ mi lụa, Quần jean ống rộng..." required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Đường dẫn ảnh (URL)</label>
+                <input type="url"
+                       class="form-control"
+                       th:field="*{image}"
+                       id="imageInput"
+                       placeholder="https://example.com/image.jpg">
+
+                <div id="imagePlaceholder" class="img-placeholder">
+                    <span>🖼️ Ảnh xem trước sẽ hiển thị ở đây</span>
+                </div>
+                <img id="imagePreview" class="preview-img d-none" alt="Xem trước sản phẩm"/>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Giá bán (VNĐ) <span class="text-danger">*</span></label>
+                <input type="number"
+                       class="form-control"
+                       th:field="*{price}"
+                       placeholder="Nhập giá tiền" required>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Phân loại <span class="text-danger">*</span></label>
+                <select th:field="*{category}" class="form-select" required>
+                    <option value="" disabled selected>-- Chọn loại trang phục --</option>
+                    <option th:each="category : ${categories}"
+                            th:value="${category.id}"
+                            th:text="${category.name}">
+                    </option>
+                </select>
+            </div>
+
+            <div class="row g-2 mt-4">
+                <div class="col-sm-4">
+                    <a th:href="@{/products}" class="btn btn-cancel btn-custom w-100 text-decoration-none text-center">
+                        Hủy bỏ
+                    </a>
+                </div>
+                <div class="col-sm-8">
+                    <button type="submit" class="btn btn-save btn-custom w-100">
+                        💾 Lưu Sản Phẩm
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+
+<script>
+    const input = document.getElementById("imageInput");
+    const preview = document.getElementById("imagePreview");
+    const placeholder = document.getElementById("imagePlaceholder");
+
+    // Hàm xử lý hiển thị ảnh
+    function updateImagePreview() {
+        if (input.value) {
+            preview.src = input.value;
+            preview.classList.remove("d-none");
+            placeholder.classList.add("d-none");
+        } else {
+            preview.classList.add("d-none");
+            placeholder.classList.remove("d-none");
+            preview.src = "";
+        }
+    }
+
+    // Lắng nghe sự kiện khi gõ link
+    input.addEventListener("input", updateImagePreview);
+
+    // Xử lý khi paste link ảnh vào mà bị lỗi (link hỏng)
+    preview.addEventListener("error", function() {
+        preview.classList.add("d-none");
+        placeholder.classList.remove("d-none");
+        placeholder.innerHTML = "<span class='text-danger'>⚠️ Đường dẫn ảnh không hợp lệ!</span>";
+    });
+
+    // Reset lại nội dung placeholder nếu link ảnh xóa đi
+    input.addEventListener("keyup", function() {
+        if (!this.value) {
+            placeholder.innerHTML = "<span>🖼️ Ảnh xem trước sẽ hiển thị ở đây</span>";
+        }
+    });
+</script>
+
+</body>
+</html>
