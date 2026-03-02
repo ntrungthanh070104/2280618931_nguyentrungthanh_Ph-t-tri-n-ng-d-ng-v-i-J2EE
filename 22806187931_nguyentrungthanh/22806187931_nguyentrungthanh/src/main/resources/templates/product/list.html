@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{_layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>Product List</title>
+
+    <style>
+        .product-card {
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Tùy chỉnh ảnh sản phẩm */
+        .product-img {
+            width: 120px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .product-img:hover {
+            transform: scale(1.15);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        /* Tùy chỉnh bảng */
+        .table-custom thead {
+            background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+            color: white;
+            border-bottom: none;
+        }
+
+        .table-custom th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* Định dạng text hiển thị giá */
+        .price-text {
+            font-weight: 800;
+            color: #dc3545;
+            font-size: 1.1rem;
+        }
+
+        /* Tùy chỉnh thanh tìm kiếm */
+        .search-box {
+            max-width: 350px;
+            border-radius: 30px;
+            padding-left: 20px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+
+        .search-box:focus {
+            box-shadow: 0 0 10px rgba(13, 110, 253, 0.2);
+            border-color: #0d6efd;
+        }
+
+        .action-btn {
+            border-radius: 8px;
+            padding: 6px 15px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content" class="container mt-5 mb-5">
+
+    <div class="product-card">
+
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-5">
+                <h3 class="text-primary fw-bold mb-0">📦 Product Management</h3>
+            </div>
+            <div class="col-md-7 d-flex justify-content-md-end justify-content-start mt-3 mt-md-0 gap-3">
+                <div class="position-relative w-100" style="max-width: 300px;">
+                    <input type="text"
+                           id="searchInput"
+                           class="form-control search-box w-100"
+                           placeholder="🔍 Search product name...">
+                </div>
+                <a th:href="@{/products/add}" class="btn btn-success rounded-pill fw-bold px-4 shadow-sm d-flex align-items-center">
+                    ➕ Add New
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle text-center table-custom mb-0">
+                <thead>
+                <tr>
+                    <th width="5%">#</th>
+                    <th width="20%">Image</th>
+                    <th width="25%">Name</th>
+                    <th width="15%">Price</th>
+                    <th width="15%">Category</th>
+                    <th width="20%">Actions</th>
+                </tr>
+                </thead>
+                <tbody id="productTable">
+                <tr th:each="product : ${products}" class="product-row">
+                    <td class="text-muted fw-bold" th:text="${product.id}"></td>
+
+                    <td>
+                        <img th:src="${product.image}" class="product-img" alt="Product Image">
+                    </td>
+
+                    <td class="fw-bold text-start" th:text="${product.name}"></td>
+
+                    <td class="price-text"
+                        th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                    </td>
+
+                    <td>
+                            <span class="badge bg-secondary rounded-pill px-3 py-2 shadow-sm"
+                                  th:text="${product.category != null ? product.category.name : 'No Category'}"></span>
+                    </td>
+
+                    <td>
+                        <div class="d-flex justify-content-center gap-2">
+                            <a th:href="@{/products/edit/{id}(id=${product.id})}" class="btn btn-outline-warning action-btn btn-sm">✏️ Edit</a>
+                            <a th:href="@{/products/delete/{id}(id=${product.id})}" class="btn btn-outline-danger action-btn btn-sm"
+                               onclick="return confirm('Are you sure you want to delete this product?');">🗑️ Delete</a>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(products)}">
+                    <td colspan="6" class="text-center text-muted py-5">
+                        <h4>📭 Database is empty</h4>
+                        <p>Click "Add New" to create your first product.</p>
+                    </td>
+                </tr>
+
+                <tr id="emptySearchRow" style="display: none;">
+                    <td colspan="6" class="text-center text-danger py-4 fw-bold">
+                        🚫 No products found matching your search.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById("searchInput");
+        const table = document.getElementById("productTable");
+        const rows = table.getElementsByClassName("product-row");
+        const emptyRow = document.getElementById("emptySearchRow");
+
+        searchInput.addEventListener("keyup", function () {
+            const filter = this.value.toLowerCase().trim();
+            let hasVisibleRow = false;
+
+            for (let i = 0; i < rows.length; i++) {
+                // Chỉ lấy text của cột "Name" (cột thứ 3, index 2) để tìm kiếm cho chính xác
+                let productName = rows[i].getElementsByTagName("td")[2].innerText.toLowerCase();
+
+                if (productName.includes(filter)) {
+                    rows[i].style.display = "";
+                    hasVisibleRow = true;
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+
+            // Hiển thị dòng thông báo nếu không có hàng nào được hiển thị
+            if (rows.length > 0) {
+                emptyRow.style.display = hasVisibleRow ? "none" : "";
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
